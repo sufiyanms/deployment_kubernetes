@@ -6,7 +6,7 @@ let port=3000;
 app.use(express.json())
 
 app.get("/", (req, res)=>{
-    res.send("welcome!")
+    res.send("welcome!!")
 })
 
 app.listen(port,()=>{
