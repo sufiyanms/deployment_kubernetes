@@ -1,10 +1,13 @@
 trigger:
-  branches:
-    include:
-      - main  # Change if needed
+- deployeement
+
+resources:
+- repo: self
 
 pool:
-  vmImage: 'ubuntu-latest'
+   name: Default
+   demands:
+   - DESKTOP-DDVOVCD
 
 variables:
   acrName: 'myacr'  # Replace with your ACR name
@@ -50,7 +53,7 @@ stages:
       displayName: 'Set AKS Context'
       inputs:
         connectionType: 'Azure Resource Manager'
-        azureSubscriptionEndpoint: 'MyAzureConnection'  # Change to your service connection name
+        azureSubscriptionEndpoint: '8cc9c5c6-1a50-4149-a01a-2dee13e75ce1'  # Change to your service connection name
         azureResourceGroup: '$(aksResourceGroup)'
         kubernetesCluster: '$(aksClusterName)'
         command: 'apply'
