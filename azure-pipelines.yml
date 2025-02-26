@@ -1,5 +1,5 @@
 trigger:
-  - main  # Fixed typo in the trigger name
+  - main  # Fixed typo in the trigger name!
 
 resources:
   - repo: self
@@ -56,18 +56,3 @@ stages:
       inputs:
         targetPath: '$(Build.ArtifactStagingDirectory)/helm'
         artifact: 'helm'
-
-# - stage: Deploy
-#   displayName: 'Deploy to AKS'
-#   jobs:
-#   - job: Deploy
-#     steps:
-#     - task: Kubernetes@1
-#       displayName: 'Set AKS Context'
-#       inputs:
-#         connectionType: 'Azure Resource Manager'
-#         azureSubscriptionEndpoint: '8cc9c5c6-1a50-4149-a01a-2dee13e75ce1'  # Change to your service connection name
-#         azureResourceGroup: '$(aksResourceGroup)'
-#         kubernetesCluster: '$(aksClusterName)'
-#         command: 'apply'
-#         arguments: '-f app/k8s/deployment.yaml -f app/k8s/service.yaml'
