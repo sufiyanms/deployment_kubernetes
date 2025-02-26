@@ -10,12 +10,9 @@ pool:
     - Agent.Name -equals DESKTOP-DDVOVCD  # Corrected syntax
 
 variables:
-  acrName: 'myacr'  # Replace with your ACR name
-  aksClusterName: 'my-aks-cluster'  # Replace with your AKS cluster name
-  aksResourceGroup: 'Application_Test'  # Replace with your Azure Resource Group
-  containerRegistry: 'myacr.azurecr.io'
-  imageName: 'my-app'
-  tag: '$(Build.BuildId)'
+  tag: 'latest'
+  build_config: '' # Default value, can be overridden in the release pipeline
+  imageName: 'poc-node'
 
 stages:
 - stage: Build
@@ -23,36 +20,44 @@ stages:
   jobs:
   - job: Build
     steps:
-    - task: Docker@2
-      displayName: 'Login to ACR'
+    - script: |
+        npm cache clean --force
+        npm install
+      displayName: 'Clean NPM Cache and Install Dependencies'
+
+    - task: Docker@2     # start Building Docker Image
+      displayName: 'Build container image2'
       inputs:
-        command: 'login'
         containerRegistry: 'service-connect-acr'
-
-    - task: Docker@2
-      displayName: 'Build Docker Image'
-      inputs:
+        repository: 'poc-node'
         command: 'build'
-        repository: '$(containerRegistry)/$(imageName)'
-        dockerfile: 'Dockerfile'
+        Dockerfile: '**/Dockerfile'  # Build a Docker image from the provided Dockerfile
+        buildContext: '$(Build.SourcesDirectory)'
         tags: '$(tag)'
+        arguments: '--build-arg build_config=$(build_config)'  # Pass build_config as a build argument (used for different environments).  # end Building Docker Image
 
-    - task: Docker@2
-      displayName: 'Push Docker Image'
+    - task: Docker@2    # start Push Docker Image to ACR
+      displayName: 'Push container image3'
       inputs:
+        containerRegistry: 'service-connect-acr'
+        repository: 'poc-node'
         command: 'push'
-        repository: '$(containerRegistry)/$(imageName)'
-        tags: '$(tag)'
-
-    - task: CopyFiles@2  # Copy Kubernetes YAML Files
-      displayName: 'Copy Kubernetes YAML files'
+        tags: '$(tag)'    # end // purpose : Pushes the built Docker image to Azure Container Registry (ACR), making it available for deployment.
+   
+                
+    - task: CopyFiles@2   #  strt Copy Kubernetes YAML Files
       inputs:
-        SourceFolder: '$(Build.SourcesDirectory)/app/k8s'  # Ensure correct path
-        Contents: '*.yaml'  # Standard YAML extension
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/helm'
+          SourceFolder: '$(Build.SourcesDirectory)'
+          Contents: '*.yml'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/helm'   # end  // Copies all Kubernetes YAML configuration files (*.yml) to a temporary build directory (Build.ArtifactStagingDirectory).
+          # old TargetFolder: '$(Build.ArtifactStagingDirectory)/*.yml'   # end  // Copies all Kubernetes YAML configuration files (*.yml) to a temporary build directory (Build.ArtifactStagingDirectory).
+
+    # These files contain Kubernetes deployment configurations, such as: Pod definitions, Service definitions
 
     - task: PublishPipelineArtifact@1  # Publish Kubernetes YAML Files
-      displayName: 'Publish Kubernetes YAML files'
       inputs:
         targetPath: '$(Build.ArtifactStagingDirectory)/helm'
         artifact: 'helm'
+
+        # purpose : Publishes  the Kubernetes YAML files as a pipeline artifact (helm), so they can be used in the deployment stage.
+        # Helm is a  package manager for Kubernetes, used for templating and managing Kubernetes deployments.
